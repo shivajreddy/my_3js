@@ -20,8 +20,7 @@ const AnimatedMesh: React.FC<AnimatedMeshProps> = ({
     geometry,
     material,
     color,
-    rotationSpeed
-}) => {
+    rotationSpeed }) => {
     const meshRef = useRef<THREE.Mesh>(null)
 
     useFrame(() => {
@@ -67,7 +66,6 @@ const AnimatedMesh: React.FC<AnimatedMeshProps> = ({
 // Animated Light Component
 const AnimatedPointLight: React.FC = () => {
     const lightRef = useRef<THREE.PointLight>(null)
-
     useFrame((state) => {
         if (lightRef.current) {
             const time = state.clock.getElapsedTime()
@@ -76,15 +74,12 @@ const AnimatedPointLight: React.FC = () => {
             lightRef.current.position.z = Math.cos(time) * 3
         }
     })
-
-
     return <pointLight ref={lightRef} color="#ff6666" intensity={0.5} position={[-5, 3, 0]} />
 }
 
 // Main App Component
 export default function App() {
     // State
-
     const [geometry, setGeometry] = useState<GeometryType>('box')
     const [material, setMaterial] = useState<MaterialType>('basic')
     const [color, setColor] = useState('#4CAF50')
@@ -122,7 +117,6 @@ export default function App() {
                 />
 
                 {/* Helpers */}
-
                 <Grid
                     args={[10, 10]}
                     cellSize={1}
@@ -134,17 +128,13 @@ export default function App() {
                     followCamera={false}
                 />
 
-
                 {/* Controls */}
                 <OrbitControls
-
                     enableDamping
                     dampingFactor={0.05}
-
                     minDistance={2}
                     maxDistance={10}
                 />
-
 
                 {/* Performance Monitor */}
                 <Stats />
@@ -192,12 +182,10 @@ export default function App() {
                     <input
                         type="range"
                         min="0"
-
                         max="0.1"
                         step="0.001"
                         value={rotationSpeed}
                         onChange={(e) => setRotationSpeed(parseFloat(e.target.value))}
-
                         style={styles.rangeInput}
                     />
                     <span style={styles.value}>{rotationSpeed.toFixed(3)}</span>
