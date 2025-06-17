@@ -1,219 +1,327 @@
-import { useEffect, useRef, useState } from 'react';
-import * as THREE from 'three';
-import './App.css';
+import React, { useRef, useState } from 'react'
 
-function App() {
-    const canvasRef = useRef<HTMLDivElement>(null);
-    const meshRef = useRef<THREE.Mesh | null>(null);
-    const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
-    const lightRef = useRef<THREE.DirectionalLight | null>(null);
-    const pointLightRef = useRef<THREE.PointLight | null>(null);
-    const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
+import { Canvas, useFrame } from '@react-three/fiber'
+import { OrbitControls, Grid, Stats } from '@react-three/drei'
+import * as THREE from 'three'
 
-    const [geometryType, setGeometryType] = useState('box');
-    const [materialType, setMaterialType] = useState('basic');
-    const [color, setColor] = useState('#4CAF50');
-    const [rotationSpeed, setRotationSpeed] = useState(0.01);
-    const [lightIntensity, setLightIntensity] = useState(1);
-    const [cameraDistance, setCameraDistance] = useState(5);
-    const [info, setInfo] = useState('Box geometry with Basic material');
+// Types
+type GeometryType = 'box' | 'sphere' | 'torus'
+type MaterialType = 'basic' | 'standard' | 'phong'
 
-    useEffect(() => {
-        const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x1a1a1a);
+interface AnimatedMeshProps {
+    geometry: GeometryType
+    material: MaterialType
+    color: string
+    rotationSpeed: number
+}
 
-        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        camera.position.z = cameraDistance;
-        cameraRef.current = camera;
+// Animated Mesh Component
+const AnimatedMesh: React.FC<AnimatedMeshProps> = ({
+    geometry,
+    material,
+    color,
+    rotationSpeed
+}) => {
+    const meshRef = useRef<THREE.Mesh>(null)
 
-        const renderer = new THREE.WebGLRenderer({ antialias: true });
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.shadowMap.enabled = true;
-        rendererRef.current = renderer;
-        canvasRef.current!.appendChild(renderer.domElement);
-
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
-        scene.add(ambientLight);
-
-        const directionalLight = new THREE.DirectionalLight(0xffffff, lightIntensity);
-        directionalLight.position.set(5, 5, 5);
-        directionalLight.castShadow = true;
-        scene.add(directionalLight);
-        lightRef.current = directionalLight;
-
-        const pointLight = new THREE.PointLight(0xff6666, 0.5);
-        pointLight.position.set(-5, 3, 0);
-        scene.add(pointLight);
-        pointLightRef.current = pointLight;
-
-        const gridHelper = new THREE.GridHelper(10, 10, 0x444444, 0x222222);
-        scene.add(gridHelper);
-
-        const createMesh = () => {
-            if (meshRef.current) {
-                scene.remove(meshRef.current);
-
-                // Dispose geometry
-                meshRef.current.geometry.dispose();
-
-                // Dispose material(s)
-                const material = meshRef.current.material;
-                if (Array.isArray(material)) {
-                    material.forEach((m) => m.dispose());
-                } else {
-                    material.dispose();
-                }
-            }
-
-
-            let geometry: THREE.BufferGeometry;
-            switch (geometryType) {
-                case 'sphere':
-                    geometry = new THREE.SphereGeometry(1, 32, 32);
-                    break;
-                case 'torus':
-                    geometry = new THREE.TorusGeometry(1, 0.4, 16, 100);
-                    break;
-                default:
-                    geometry = new THREE.BoxGeometry(2, 2, 2);
-            }
-
-            let material: THREE.Material;
-            const colorHex = new THREE.Color(color);
-
-            switch (materialType) {
-                case 'standard':
-                    material = new THREE.MeshStandardMaterial({ color: colorHex, metalness: 0.5, roughness: 0.5 });
-                    break;
-                case 'phong':
-                    material = new THREE.MeshPhongMaterial({ color: colorHex, shininess: 100, specular: 0x222222 });
-                    break;
-                default:
-                    material = new THREE.MeshBasicMaterial({ color: colorHex });
-            }
-
-            const mesh = new THREE.Mesh(geometry, material);
-            mesh.castShadow = true;
-            mesh.receiveShadow = true;
-            scene.add(mesh);
-            meshRef.current = mesh;
-
-            setInfo(`${capitalize(geometryType)} geometry with ${capitalize(materialType)} material`);
-        };
-
-        const onWindowResize = () => {
-            if (!rendererRef.current || !cameraRef.current) return;
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        };
-        window.addEventListener('resize', onWindowResize);
-
-        const animate = () => {
-            requestAnimationFrame(animate);
-            if (meshRef.current) {
-                meshRef.current.rotation.x += rotationSpeed;
-                meshRef.current.rotation.y += rotationSpeed;
-            }
-
-            const t = Date.now() * 0.001;
-            if (pointLightRef.current) {
-                pointLightRef.current.position.x = Math.sin(t) * 3;
-                pointLightRef.current.position.z = Math.cos(t) * 3;
-            }
-
-            renderer.render(scene, camera);
-        };
-
-        createMesh();
-        animate();
-
-        return () => {
-            window.removeEventListener('resize', onWindowResize);
-        };
-    }, []);
-
-    useEffect(() => {
-        if (lightRef.current) {
-            lightRef.current.intensity = lightIntensity;
-        }
-    }, [lightIntensity]);
-
-    useEffect(() => {
-        if (cameraRef.current) {
-            cameraRef.current.position.z = cameraDistance;
-        }
-    }, [cameraDistance]);
-
-    useEffect(() => {
-        if (rendererRef.current) {
-            rendererRef.current.setSize(window.innerWidth, window.innerHeight);
-        }
-    }, [geometryType, materialType, color]);
-
-    useEffect(() => {
+    useFrame(() => {
         if (meshRef.current) {
-            meshRef.current.material.color.set(color);
+            meshRef.current.rotation.x += rotationSpeed
+            meshRef.current.rotation.y += rotationSpeed
         }
-    }, [color]);
+    })
+
+    // Geometry selection
+    const getGeometry = () => {
+        switch (geometry) {
+            case 'sphere':
+                return <sphereGeometry args={[1, 32, 32]} />
+            case 'torus':
+                return <torusGeometry args={[1, 0.4, 16, 100]} />
+            default:
+                return <boxGeometry args={[2, 2, 2]} />
+        }
+    }
+
+    // Material selection
+    const getMaterial = () => {
+        const props = { color }
+        switch (material) {
+            case 'standard':
+                return <meshStandardMaterial {...props} metalness={0.5} roughness={0.5} />
+            case 'phong':
+                return <meshPhongMaterial {...props} shininess={100} specular="#222222" />
+            default:
+                return <meshBasicMaterial {...props} />
+        }
+    }
 
     return (
-        <>
-            <div id="canvas-container" ref={canvasRef}></div>
-
-            <div id="controls">
-                <h3>Three.js Playground</h3>
-
-                <div className="control-group">
-                    <label>Geometry:</label>
-                    <button onClick={() => setGeometryType('box')}>Box</button>
-                    <button onClick={() => setGeometryType('sphere')}>Sphere</button>
-                    <button onClick={() => setGeometryType('torus')}>Torus</button>
-                </div>
-
-                <div className="control-group">
-                    <label>Material:</label>
-                    <button onClick={() => setMaterialType('basic')}>Basic</button>
-                    <button onClick={() => setMaterialType('standard')}>Standard</button>
-                    <button onClick={() => setMaterialType('phong')}>Phong</button>
-                </div>
-
-                <div className="control-group">
-                    <label>Object Color:</label>
-                    <input type="color" value={color} onChange={(e) => setColor(e.target.value)} />
-                </div>
-
-                <div className="control-group">
-                    <label>Rotation Speed:</label>
-                    <input type="range" min="0" max="0.1" step="0.001" value={rotationSpeed} onChange={(e) => setRotationSpeed(parseFloat(e.target.value))} />
-                </div>
-
-                <div className="control-group">
-                    <label>Light Intensity:</label>
-                    <input type="range" min="0" max="2" step="0.1" value={lightIntensity} onChange={(e) => setLightIntensity(parseFloat(e.target.value))} />
-                </div>
-
-                <div className="control-group">
-                    <label>Camera Distance:</label>
-                    <input type="range" min="2" max="10" step="0.5" value={cameraDistance} onChange={(e) => setCameraDistance(parseFloat(e.target.value))} />
-                </div>
-
-                <div className="code-hint">
-                    Tip: mesh.rotation.x += speed
-                </div>
-            </div>
-
-            <div className="info">
-                <strong>Mouse Controls:</strong> Left click + drag to rotate | Right click + drag to pan | Scroll to zoom<br />
-                <strong>Current:</strong> {info}
-            </div>
-        </>
-    );
+        <mesh ref={meshRef} castShadow receiveShadow>
+            {getGeometry()}
+            {getMaterial()}
+        </mesh>
+    )
 }
 
-function capitalize(str: string) {
-    return str.charAt(0).toUpperCase() + str.slice(1);
+// Animated Light Component
+const AnimatedPointLight: React.FC = () => {
+    const lightRef = useRef<THREE.PointLight>(null)
+
+    useFrame((state) => {
+        if (lightRef.current) {
+            const time = state.clock.getElapsedTime()
+            lightRef.current.position.x = Math.sin(time) * 3
+
+            lightRef.current.position.z = Math.cos(time) * 3
+        }
+    })
+
+
+    return <pointLight ref={lightRef} color="#ff6666" intensity={0.5} position={[-5, 3, 0]} />
 }
 
-export default App;
+// Main App Component
+export default function App() {
+    // State
 
+    const [geometry, setGeometry] = useState<GeometryType>('box')
+    const [material, setMaterial] = useState<MaterialType>('basic')
+    const [color, setColor] = useState('#4CAF50')
+
+    const [rotationSpeed, setRotationSpeed] = useState(0.01)
+    const [lightIntensity, setLightIntensity] = useState(1)
+    const [cameraDistance] = useState(5)
+
+    return (
+        <div style={{ width: '100vw', height: '100vh', position: 'relative' }}>
+            {/* Three.js Canvas */}
+            <Canvas
+                shadows
+                camera={{ position: [0, 0, cameraDistance], fov: 75 }}
+                style={{ background: '#1a1a1a' }}
+            >
+
+                {/* Lights */}
+                <ambientLight intensity={0.5} />
+                <directionalLight
+                    position={[5, 5, 5]}
+                    intensity={lightIntensity}
+                    castShadow
+                    shadow-mapSize={[1024, 1024]}
+                />
+                <AnimatedPointLight />
+
+                {/* Main Mesh */}
+                <AnimatedMesh
+                    geometry={geometry}
+                    material={material}
+                    color={color}
+                    rotationSpeed={rotationSpeed}
+
+                />
+
+                {/* Helpers */}
+
+                <Grid
+                    args={[10, 10]}
+                    cellSize={1}
+                    cellThickness={1}
+                    cellColor="#444444"
+                    sectionColor="#222222"
+                    fadeDistance={30}
+                    fadeStrength={1}
+                    followCamera={false}
+                />
+
+
+                {/* Controls */}
+                <OrbitControls
+
+                    enableDamping
+                    dampingFactor={0.05}
+
+                    minDistance={2}
+                    maxDistance={10}
+                />
+
+
+                {/* Performance Monitor */}
+                <Stats />
+            </Canvas>
+
+
+            {/* UI Controls */}
+            <div style={styles.controls}>
+                <h3 style={styles.title}>React Three Fiber Playground</h3>
+
+
+                <div style={styles.controlGroup}>
+                    <label style={styles.label}>Geometry:</label>
+                    <div>
+                        <button style={styles.button} onClick={() => setGeometry('box')}>Box</button>
+                        <button style={styles.button} onClick={() => setGeometry('sphere')}>Sphere</button>
+                        <button style={styles.button} onClick={() => setGeometry('torus')}>Torus</button>
+                    </div>
+                </div>
+
+
+                <div style={styles.controlGroup}>
+                    <label style={styles.label}>Material:</label>
+                    <div>
+                        <button style={styles.button} onClick={() => setMaterial('basic')}>Basic</button>
+                        <button style={styles.button} onClick={() => setMaterial('standard')}>Standard</button>
+                        <button style={styles.button} onClick={() => setMaterial('phong')}>Phong</button>
+                    </div>
+                </div>
+
+
+                <div style={styles.controlGroup}>
+                    <label style={styles.label}>Object Color:</label>
+
+                    <input
+                        type="color"
+                        value={color}
+                        onChange={(e) => setColor(e.target.value)}
+                        style={styles.colorInput}
+                    />
+                </div>
+
+                <div style={styles.controlGroup}>
+                    <label style={styles.label}>Rotation Speed:</label>
+                    <input
+                        type="range"
+                        min="0"
+
+                        max="0.1"
+                        step="0.001"
+                        value={rotationSpeed}
+                        onChange={(e) => setRotationSpeed(parseFloat(e.target.value))}
+
+                        style={styles.rangeInput}
+                    />
+                    <span style={styles.value}>{rotationSpeed.toFixed(3)}</span>
+
+                </div>
+
+                <div style={styles.controlGroup}>
+                    <label style={styles.label}>Light Intensity:</label>
+                    <input
+                        type="range"
+                        min="0"
+                        max="2"
+                        step="0.1"
+                        value={lightIntensity}
+                        onChange={(e) => setLightIntensity(parseFloat(e.target.value))}
+                        style={styles.rangeInput}
+                    />
+                    <span style={styles.value}>{lightIntensity.toFixed(1)}</span>
+                </div>
+
+
+                <div style={styles.codeHint}>
+                    <code>useFrame((state, delta) ={'>'} rotation += delta)</code>
+                </div>
+
+            </div>
+
+            {/* Info Panel */}
+            <div style={styles.info}>
+                <strong>Mouse Controls:</strong> Left drag to rotate | Right drag to pan | Scroll to zoom<br />
+                <strong>Current:</strong> {geometry.charAt(0).toUpperCase() + geometry.slice(1)} geometry
+
+                with {material.charAt(0).toUpperCase() + material.slice(1)} material
+            </div>
+        </div>
+    )
+}
+
+
+// Styles
+const styles: Record<string, React.CSSProperties> = {
+
+    controls: {
+        position: 'absolute',
+        top: 10,
+        left: 10,
+
+        background: 'rgba(0, 0, 0, 0.7)',
+        color: 'white',
+        padding: 15,
+        borderRadius: 5,
+        maxWidth: 320,
+        fontFamily: 'Arial, sans-serif'
+    },
+    title: {
+        marginTop: 0,
+        color: '#4CAF50',
+        fontSize: 18
+    },
+    controlGroup: {
+        margin: '12px 0',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 10
+    },
+    label: {
+        display: 'inline-block',
+        width: 100,
+        fontSize: 13,
+        fontWeight: 'bold'
+    },
+    button: {
+        background: '#4CAF50',
+
+        color: 'white',
+        border: 'none',
+        padding: '6px 12px',
+        margin: '0 2px',
+        cursor: 'pointer',
+        borderRadius: 3,
+        fontSize: 12,
+        transition: 'background 0.2s'
+    },
+
+    colorInput: {
+        width: 50,
+        height: 30,
+        border: 'none',
+        borderRadius: 3,
+        cursor: 'pointer'
+    },
+    rangeInput: {
+
+        width: 120,
+        cursor: 'pointer'
+    },
+    value: {
+        fontSize: 11,
+        color: '#aaa',
+
+        minWidth: 40,
+        display: 'inline-block'
+    },
+    codeHint: {
+
+        background: 'rgba(40, 40, 40, 0.9)',
+        color: '#4CAF50',
+        padding: 8,
+        margin: '10px 0',
+        fontFamily: 'monospace',
+
+        fontSize: 11,
+        borderRadius: 3,
+        overflowX: 'auto'
+    },
+    info: {
+        position: 'absolute',
+        bottom: 10,
+        left: 10,
+        background: 'rgba(0, 0, 0, 0.7)',
+        color: 'white',
+        padding: 10,
+        borderRadius: 5,
+        fontSize: 12,
+        fontFamily: 'Arial, sans-serif'
+    }
+}
