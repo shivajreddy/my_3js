@@ -13,18 +13,26 @@ document.body.appendChild(renderer.domElement);
 const boxGeometry = new THREE.BoxGeometry(1, 1, 1);
 const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
 const cube = new THREE.Mesh(boxGeometry, material);
+cube.rotateY(20);
 
 scene.add(cube);
 
-var ptag = document.createElement('p');
-ptag.textContent = "hello there";
-var x = new CSS2DRenderer();
-x.domElement = ptag;
-x.render(scene, camera);
+const color = 0x006699;
+const matDark = new THREE.LineBasicMaterial({
+    color: color,
+    side: THREE.DoubleSide
+});
+const matLight = new THREE.MeshBasicMaterial({
+    color: color,
+    transparent: true,
+    opacity: .4,
+    side: THREE.DoubleSide
+});
+const message = ' three.js';
 
 camera.position.z = 5;
 renderer.setAnimationLoop(() => {
-    cube.rotation.x += 0.01;
+    // cube.rotation.x += 0.01;
     // cube.rotation.y -= 0.01;
     renderer.render(scene, camera)
 });
