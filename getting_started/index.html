@@ -7,10 +7,34 @@
     <link rel="icon"
         href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🚀</text></svg>">
     <title>3JS App</title>
+    <script type="module" src="/main.js"></script>
+    <style>
+        #app {
+            display: flex;
+        }
+
+        #sidebar {
+            background-color: gray;
+            padding-left: 5px;
+            padding-right: 5px;
+        }
+
+        #canvas {
+            background-color: #eee;
+        }
+    </style>
 </head>
 
 <body style="margin: 0;">
-    <script type="module" src="/main.js"></script>
+    <div id="app">
+        <div id="sidebar">
+            <div>
+                <p>Menu</p>
+                <button id="update">click</button>
+            </div>
+        </div>
+        <div id="canvas" />
+    </div>
 </body>
 
 

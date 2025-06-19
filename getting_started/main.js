@@ -8,10 +8,14 @@ const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerH
 const renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
 
-document.body.appendChild(renderer.domElement);
+// document.body.appendChild(renderer.domElement);
+document.getElementById("canvas").appendChild(renderer.domElement);
 
+function getBoxColor() {
+    return Math.floor(Math.random() * 0x1000000);
+}
 const boxGeometry = new THREE.BoxGeometry(1, 1, 1);
-const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+const material = new THREE.MeshBasicMaterial({ color: getBoxColor() });
 const cube = new THREE.Mesh(boxGeometry, material);
 cube.rotateY(20);
 
@@ -36,4 +40,16 @@ renderer.setAnimationLoop(() => {
     // cube.rotation.y -= 0.01;
     renderer.render(scene, camera)
 });
+
+var count = 0;
+document.addEventListener("DOMContentLoaded", function () {
+    const button = document.getElementById("update");
+    button.addEventListener("click", function () {
+        count++;
+        console.clear();
+        console.log("Count:", count);
+        cube.material.color.setHex(getBoxColor());
+    })
+})
+
 
