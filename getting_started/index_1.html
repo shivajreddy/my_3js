@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🚀</text></svg>">
+    <title>3JS App</title>
+    <script type="module" src="/main.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        #app {
+            display: flex;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        #sidebar {
+            background-color: gray;
+            padding: 5px;
+            width: 50px;
+            min-width: 50px;
+            flex-shrink: 0;
+        }
+
+        #canvas {
+            background-color: #eee;
+            flex: 1;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        #canvas canvas {
+            display: block;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="app">
+        <div id="sidebar">
+            <div>
+                <p>Menu</p>
+                <button id="update">click</button>
+            </div>
+        </div>
+        <div id="canvas"></div>
+    </div>
+</body>
+
+</html>

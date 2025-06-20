@@ -1,60 +1,68 @@
 import * as THREE from 'three';
-import { CSS2DRenderer } from 'three/examples/jsm/Addons.js';
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+
+const canvasContainer = document.getElementById("canvas");
+const CANVAS_WIDTH = canvasContainer.clientWidth;
+const CANVAS_HEIGHT = canvasContainer.clientHeight;
 
 const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+// fov, aspect-ratio, clip-near, clip-far
+const camera = new THREE.PerspectiveCamera(50, CANVAS_WIDTH / CANVAS_HEIGHT, 1, 1000);
 const renderer = new THREE.WebGLRenderer();
-renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setSize(CANVAS_WIDTH, CANVAS_HEIGHT);
 
-// document.body.appendChild(renderer.domElement);
-const domCanvas = document.getElementById("canvas");
-domCanvas.appendChild(renderer.domElement);
+canvasContainer.appendChild(renderer.domElement);
 
+// Color function
 function getBoxColor() {
     return Math.floor(Math.random() * 0x1000000);
 }
-const boxGeometry = new THREE.BoxGeometry(3, .2, 1);
-const material = new THREE.MeshBasicMaterial({ color: getBoxColor() });
-const cube = new THREE.Mesh(boxGeometry, material);
 
-scene.add(cube);
+// Cube
+const boxGeometry = new THREE.BoxGeometry(1, 1, 1);
+const boxMaterial = new THREE.MeshBasicMaterial({ color: getBoxColor() });
+const cube = new THREE.Mesh(boxGeometry, boxMaterial);
 
-const color = 0x006699;
-const matDark = new THREE.LineBasicMaterial({
-    color: color,
-    side: THREE.DoubleSide
-});
-const matLight = new THREE.MeshBasicMaterial({
-    color: color,
-    transparent: true,
-    opacity: .4,
-    side: THREE.DoubleSide
-});
-const message = ' three.js';
+// Torus
+const torusGeometry = new THREE.TorusGeometry(1.5, .2, 12, 48);
+// const torusGeometry = new THREE.TorusGeometry(14, 3, 8, 100);
+// torusGeometry.parameters.radialSegments = 400;
+// torusGeometry.parameters.tubularSegments = 400;
+// const torusMaterial = new THREE.MeshBasicMaterial({ color: getBoxColor() });
+const torusMaterial = new THREE.MeshStandardMaterial({ color: getBoxColor() });
+const torus = new THREE.Mesh(torusGeometry, torusMaterial);
+const torusLight = new THREE.PointLight(0xffffff, 1);
+torusLight.position.set(5, 5, 5);
+scene.add(torusLight);
+const torusAmbientLight = new THREE.AmbientLight(0x404040, 0.5);
+scene.add(torusAmbientLight);
+scene.add(torus);
 
+cube.rotation.y += 10;
+// scene.add(cube);
+
+// Camera position
 camera.position.z = 5;
+
+var isPaused = false;
+
+// Animation loop
 renderer.setAnimationLoop(() => {
-    // cube.rotation.x += 0.01;
-    // cube.rotation.y -= 0.01;
-    renderer.render(scene, camera)
-    labelRenderer.render(scene, camera);
+    if (!isPaused) {
+        // cube.rotation.x += 0.01;
+        // cube.rotation.y += 0.01;
+
+        torus.rotation.x += 0.01;
+        torus.rotation.y += 0.005;
+    }
+    renderer.render(scene, camera);
 });
 
+// Change Box color on button click
 document.addEventListener("DOMContentLoaded", function () {
     const button = document.getElementById("update");
     button.addEventListener("click", function () {
-        cube.material.color.setHex(getBoxColor());
-    })
-})
-
-// 2. Create and add the label Renderer
-const labelRenderer = new CSS2DRenderer();
-labelRenderer.setSize(window.innerWidth, window.innerHeight);
-labelRenderer.domElement.style.position = 'absolute';
-labelRenderer.domElement.style.top = '0px';
-domCanvas.appendChild(labelRenderer.domElement);
-
-// 3. Create a DOM element for the text
+        // cube.material.color.setHex(getBoxColor());
+        isPaused = !isPaused;
+    });
+});
 
